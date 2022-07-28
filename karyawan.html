@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Karyawan</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="./css/materialize.min.css">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" href="./images/icons/icon-72x72.png">
+</head>
+<body>
+
+<nav>
+    <div class="nav-wrapper indigo">
+        <div class="container">
+            <a href="#" class="brand-logo">Logo</a>
+            <a href="#" data-target="mobile-links" class="sidenav-trigger hide-on-large-only">
+                <i class="material-icons">menu</i>
+            </a>
+            <ul id="nav-mobile" class="right hide-on-med-and-down">
+                <li><a href="./index.html">Home</a></li>
+                <li><a href="./karyawan.html">Data Karyawan</a></li>
+                <li><a href="./pushnotif.html">Push Notification</a></li>
+            </ul>
+        </div>
+
+    </div>
+</nav>
+
+<ul id="mobile-links" class="sidenav">
+    <li><a href="#">Menu</a></li>
+    <li>
+        <div class="divider"></div>
+    </li>
+    <li><a href="./index.html">Home</a></li>
+    <li><a href="./karyawan.html">Data Karyawan</a></li>
+    <li><a href="./pushnotif.html">Push Notification</a></li>
+</ul>
+
+
+<div class="container center">
+    
+    <h2>Data Karyawan</h2>
+
+    <a class="btn-floating btn-large waves-effect waves-light green" href="./karyawanadd.html"><i class="material-icons">add</i></a>
+    <table class="striped">
+        <thead>
+        <tr>
+            <th>Action</th>
+            <th>Nama</th>
+            <th>Alamat</th>
+            <th>No HP</th>
+            <th>Tgl Lahir</th>
+            <th>Umur (Tahun)</th>
+            <th>Image</th>
+        </tr>
+        </thead>
+
+        <tbody id="table-content"></tbody>
+    </table>
+</div>
+
+<script src="./js/jquery-3.6.0.min.js"></script>
+<script src="./js/materialize.min.js"></script>
+<script src="./js/dexie.min.js"></script>
+<script src="./js/idb.js"></script>
+<script src="./js/main.js"></script>
+<script src="./js/moment.js"></script>
+
+<script>
+    async function getKaryawanFromAPI() {
+        try {
+            let open = await fetch('https://pwa-service.hydrogendioxide.net/api/karyawan')
+            let dataKaryawan = await open.json();
+            console.log(dataKaryawan);
+            displayTableContent(dataKaryawan);
+
+            dataKaryawan.map(async (karyawan) => {
+                const payload = ({
+                    kar_id: karyawan.id,
+                    nama: karyawan.nama,
+                    alamat: karyawan.alamat,
+                    no_hp: karyawan.no_hp,
+                    tgl_lahir: karyawan.tgl_lahir,
+                    image: karyawan.image,
+                })
+                const kar = await iDB.karyawan.where({ "kar_id" : karyawan.id }).first();
+            
+                if (kar) {
+                    updateDataToIDB(kar.id, payload)
+                } else {
+                    storeDataToIDB(payload)
+                }
+            })
+
+        } catch (err) {
+            console.log(err)
+            getKaryawanFromIDB()
+            
+        }
+    }
+
+    
+    async function storeDataToIDB(payload){
+        window.iDB.karyawan.add(payload);
+    }
+
+    async function updateDataToIDB(key, payload){
+        window.iDB.karyawan.update(key, payload);
+    }
+
+    async function getKaryawanFromIDB() {
+        const dataKaryawan = await window.iDB.karyawan.toArray()
+        displayTableContent(dataKaryawan)
+    }
+
+    // dataKaryawan: array
+    function displayTableContent(dataKaryawan) {
+        let htmlKaryawan = '';
+        dataKaryawan.map(karyawan => {
+            karyawan.umur = moment().diff(karyawan.tgl_lahir, 'years', false);
+            let htmlAksi = ''
+            if (karyawan.umur > 17) {
+                htmlAksi += `<label><input type="checkbox" class="filled-in" checked/><span></span></label>`
+            } else {
+                htmlAksi += `<label><input type="checkbox" class="filled-in"/><span></span></label>`
+            }
+            htmlKaryawan += `
+                <tr>
+                    <td>${htmlAksi}</td>
+                    <td>${karyawan.nama}</td>
+                    <td>${karyawan.alamat}</td>
+                    <td>${karyawan.no_hp}</td>
+                    <td>${karyawan.tgl_lahir}</td>
+                    <td>${karyawan.umur}</td>
+                    <td><img src="${karyawan.image}" style="max-width: 50px" alt="foto profil"></td>
+                </tr>
+            `
+        });
+
+        document.getElementById('table-content').innerHTML = htmlKaryawan;
+    }
+
+    getKaryawanFromAPI();
+</script>
+
+</body>
+</html>

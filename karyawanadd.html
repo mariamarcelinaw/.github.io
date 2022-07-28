@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Karyawan</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="./css/materialize.min.css">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" href="./images/icons/icon-72x72.png">
+</head>
+<body>
+
+<nav>
+    <div class="nav-wrapper indigo">
+        <div class="container">
+            <a href="#" class="brand-logo">Logo</a>
+            <a href="#" data-target="mobile-links" class="sidenav-trigger hide-on-large-only">
+                <i class="material-icons">menu</i>
+            </a>
+            <ul id="nav-mobile" class="right hide-on-med-and-down">
+                <li><a href="./index.html">Home</a></li>
+                <li><a href="./karyawan.html">Data Karyawan</a></li>
+                <li><a href="./pushnotif.html">Push Notification</a></li>
+            </ul>
+        </div>
+
+    </div>
+</nav>
+
+<ul id="mobile-links" class="sidenav">
+    <li><a href="#">Menu</a></li>
+    <li>
+        <div class="divider"></div>
+    </li>
+    <li><a href="./index.html">Home</a></li>
+    <li><a href="./karyawan.html">Data Karyawan</a></li>
+    <li><a href="./pushnotif.html">Push Notification</a></li>
+</ul>
+
+<div class="container center">
+    <h2>Tambah Karyawan</h2>
+
+    <div class="row">
+        <div class="input-field col s12">
+            <input id="nama" type="text">
+            <label for="nama">Nama</label>
+        </div>
+
+        <div class="input-field col s12">
+            <input id="alamat" type="text">
+            <label for="alamat">Alamat</label>
+        </div>
+
+        <div class="input-field col s12">
+            <button class="waves-effect waves-light btn" onclick="addKaryawan()">Simpan</button>
+        </div>
+    </div>
+
+</div>
+
+<script src="./js/jquery-3.6.0.min.js"></script>
+<script src="./js/materialize.min.js"></script>
+<script src="./js/dexie.min.js"></script>
+<script src="./js/idb.js"></script>
+<script src="./js/main.js"></script>
+
+<script>
+    async function addKaryawan() {
+        // 1
+        let payload = {
+            nama: document.getElementById('nama').value,
+            alamat: document.getElementById('alamat').value,
+        }
+
+        // 2
+        try {
+            await sendDataToBackgroundSync(payload);
+            M.toast({ html: 'Berhasil Menambah Background Sync' })
+            //  if (navigator.onLine) {
+            //     await sendDataToServer(payload);
+            //     M.toast({ html: 'Berhasil Menambah Karyawan' })
+            // } else {
+            //     await sendDataToBackgroundSync(payload);
+            //     M.toast({ html: 'Berhasil Menambah Background Sync' })
+            // }
+        } catch (err) {
+            console.log(err);
+            M.toast({ html: 'Terjadi Kesalhaan saat submit' })
+        }
+    }
+
+    async function sendDataToServer(payload) {
+        try {
+            const response = await fetch('https://pwa-service.hydrogendioxide.net/api/karyawan', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+            return await response.json();
+        } catch (err) {
+            console.log(err)
+            throw err
+        }
+    }
+
+    async function sendDataToBackgroundSync(payload) {
+        // 2.2.1. Memasukkan data ke IDB (tabel baru)
+            await window.iDB.karyawan_bgsync.add(payload);
+
+        // 2.2.2. Mengirim data ke background sync via service worker
+        navigator.serviceWorker.ready
+                 .then(registration => registration.sync.register('syncAddKaryawan'))
+                 .then(() => console.log('Registered background sync'))
+                 .catch(err => console.error('Error registering background sync', err))
+    }
+</script>
+
+</body>
+</html>
