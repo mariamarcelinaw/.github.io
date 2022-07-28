@@ -1,4 +1,4 @@
-importScripts('http://localhost:3000/js/dexie.min.js')
+importScripts('https://mariamarcelinaw.github.io//js/dexie.min.js')
 
 let cacheName = 'pwa-cache';
 const db = new Dexie('pwa-database');
@@ -14,7 +14,7 @@ const isValidUrl = urlString => {
     } catch (e) {
         return false;
     }
-    if (url.host === 'localhost:3000' || url.host === '127.0.0.1:3000') {
+    if (url.host === 'https://mariamarcelinaw.github.io/') {
         return url.protocol === 'http:' || url.protocol === 'https:';
     }
     return false
